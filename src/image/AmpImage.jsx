@@ -16,34 +16,39 @@ export default class AmpImage extends React.PureComponent {
     };
   }
 
-  render() {
-    let helper = this.context.$Utils.$UIComponentHelper;
-    let {
-      src,
-      srcSet,
-      sizes,
-      width,
-      height,
-      layout,
-      alt,
-      noloading,
-      className
-    } = this.props;
+  static get propTypes() {
+    return {
+      scrolling: PropTypes.string,
+      wrapperClassName: PropTypes.string,
+      className: PropTypes.string,
+      noloading: PropTypes.bool,
+      children: PropTypes.node
+    };
+  }
 
-    return (
-      <amp-img
-        src={src}
-        srcSet={srcSet}
-        sizes={sizes}
-        width={width}
-        height={height}
-        layout={layout}
-        alt={alt}
-        noloading={noloading ? '' : null}
-        class={helper.cssClasses(className)}
-        {...helper.getDataProps(this.props)}
-        {...helper.getAriaProps(this.props)}
-      />
-    );
+  static get defaultProps() {
+    return {
+      scrolling: 'no',
+      wrapperClassName: '',
+      className: '',
+      noloading: false,
+      children: null
+    };
+  }
+
+  render() {
+    const helper = this.context.$Utils.$UIComponentHelper,
+      atomProps = helper.getRefinedProps({
+        originalProps: this.props,
+        removeProps: AmpImage.defaultProps,
+        addProps: {
+          class: helper.cssClasses(
+            this.props.wrapperClassName,
+            this.props.className
+          )
+        }
+      });
+
+    return <amp-img {...atomProps}/>;
   }
 }

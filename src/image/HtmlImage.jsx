@@ -20,6 +20,30 @@ export default class HtmlImage extends React.PureComponent {
     };
   }
 
+  static get propTypes() {
+    return {
+      width: PropTypes.number,
+      height: PropTypes.number,
+      layout: PropTypes.string,
+      wrapperClassName: PropTypes.string,
+      className: PropTypes.string,
+      noloading: PropTypes.bool,
+      children: PropTypes.node
+    };
+  }
+
+  static get defaultProps() {
+    return {
+      width: null,
+      height: null,
+      layout: null,
+      wrapperClassName: '',
+      className: '',
+      noloading: false,
+      children: null
+    };
+  }
+
   static getDerivedStateFromProps(nextProps, prevState) {
     if (
       nextProps.src !== prevState.src ||
@@ -69,6 +93,16 @@ export default class HtmlImage extends React.PureComponent {
     );
   }
 
+  get renderNoScript() {
+    return !(
+      this.utils.$Settings &&
+      this.utils.$Settings.plugin &&
+      this.utils.$Settings.plugin.imaUiAtoms &&
+      this.utils.$Settings.plugin.imaUiAtoms.disableNoScript &&
+      this.utils.$Settings.plugin.imaUiAtoms.disableNoScript.images === true
+    );
+  }
+
   componentDidMount() {
     this._mounted = true;
 
@@ -97,66 +131,70 @@ export default class HtmlImage extends React.PureComponent {
   }
 
   render() {
-    let helper = this.utils.$UIComponentHelper;
+    const helper = this.utils.$UIComponentHelper,
+      isResponsive = this.props.layout === 'responsive',
+      wrapperStyle = isResponsive
+        ? {}
+        : {
+            width: this.props.width || 'auto',
+            height: this.props.height || 'auto'
+          },
+      computedWrapperClassName = helper.cssClasses(
+        {
+          'atm-image': true,
+          'atm-overflow': true,
+          'atm-placeholder': !this.state.noloading,
+          'atm-responsive': isResponsive,
+          'atm-fill': this.props.layout === 'fill'
+        },
+        this.props.wrapperClassName
+      ),
+      computedTargetClassName = helper.cssClasses(
+        {
+          'atm-fill': true,
+          'atm-loaded': this.state.noloading && this._visibleInViewport
+        },
+        this.props.className
+      ),
+      sizer = isResponsive ? (
+        <Sizer
+          width={this.props.width}
+          height={this.props.height}
+          placeholder={!this.state.noloading}
+        />
+      ) : null,
+      atomProps = helper.getRefinedProps({
+        originalProps: this.props,
+        removeProps: HtmlImage.defaultProps,
+        addProps: {
+          className: computedTargetClassName
+        }
+      }),
+      atom = this.state.noloading ? <img {...atomProps} /> : null,
+      loader =
+        this.state.showLoader && !this.state.noloading ? (
+          <Loader mode="small" layout="center" />
+        ) : null,
+      noScript = this.renderNoScript ? (
+        <noscript
+          dangerouslySetInnerHTML={{
+            __html: `<img
+              class="${helper.cssClasses('atm-fill atm-loaded')}"
+              ${helper.serializeObjectToNoScript(atomProps)}/>`
+          }}
+        />
+      ) : null;
 
     return (
       <div
         ref={this._rootElement}
-        className={helper.cssClasses(
-          {
-            'atm-image': true,
-            'atm-overflow': true,
-            'atm-placeholder': !this.state.noloading,
-            'atm-responsive': this.props.layout === 'responsive',
-            'atm-fill': this.props.layout === 'fill'
-          },
-          this.props.className
-        )}
-        style={
-          this.props.layout === 'responsive'
-            ? {}
-            : {
-                width: this.props.width || 'auto',
-                height: this.props.height || 'auto'
-              }
-        }
-        {...helper.getDataProps(this.props)}>
-        {this.props.layout === 'responsive' ? (
-          <Sizer
-            width={this.props.width}
-            height={this.props.height}
-            placeholder={!this.state.noloading}
-          />
-        ) : null}
-        {this.state.noloading ? (
-          <img
-            src={this.props.src}
-            srcSet={this.props.srcSet}
-            sizes={this.props.sizes}
-            alt={this.props.alt}
-            onLoad={this.props.onLoad}
-            onError={this.props.onError}
-            className={helper.cssClasses({
-              'atm-fill': true,
-              'atm-loaded': this.state.noloading && this._visibleInViewport
-            })}
-            {...helper.getAriaProps(this.props)}
-          />
-        ) : null}
-        {this.state.showLoader && !this.state.noloading ? (
-          <Loader mode="small" layout="center" />
-        ) : null}
-        <noscript
-          dangerouslySetInnerHTML={{
-            __html: `<img
-								src="${this.props.src || ''}"
-								srcset="${this.props.srcSet || ''}"
-								sizes="${this.props.sizes || ''}"
-								alt="${this.props.alt || ''}"
-								class="${helper.cssClasses('atm-fill atm-loaded')}"
-								${helper.serializeObjectToNoScript(helper.getAriaProps(this.props))}/>`
-          }}
-        />
+        className={computedWrapperClassName}
+        style={wrapperStyle}
+      >
+        {sizer}
+        {atom}
+        {loader}
+        {noScript}
       </div>
     );
   }

@@ -19,6 +19,7 @@ export default class Sizer extends React.PureComponent {
       width: PropTypes.number,
       height: PropTypes.number,
       placeholder: PropTypes.bool,
+      style: PropTypes.string,
       className: PropTypes.string
     };
   }
@@ -28,26 +29,28 @@ export default class Sizer extends React.PureComponent {
       width: 0,
       height: 0,
       placeholder: false,
+      style: null,
       className: ''
     };
   }
 
   render() {
-    let helper = this.context.$Utils.$UIComponentHelper;
+    const helper = this.context.$Utils.$UIComponentHelper,
+      sizerStyle = this.props.style || {
+        paddingTop: (this.props.height / this.props.width) * 100 + '%'
+      },
+      componentClassName = helper.cssClasses(
+        {
+          'atm-sizer': true,
+          'atm-placeholder': this.props.placeholder
+        },
+        this.props.className
+      );
 
     return (
       <div
-        className={helper.cssClasses(
-          {
-            'atm-sizer': true,
-            'atm-placeholder': this.props.placeholder
-          },
-          this.props.className
-        )}
-        style={{
-          paddingTop: (this.props.height / this.props.width) * 100 + '%'
-        }}
-        {...helper.getDataProps(this.props)}
+        className={componentClassName}
+        style={sizerStyle}
       />
     );
   }

@@ -1,5 +1,6 @@
 import ComponentPositions from './ComponentPositions';
 import Visibility from './Visibility';
+import React from 'react';
 import { Infinite } from 'infinite-circle';
 
 /**
@@ -74,6 +75,13 @@ export default class UIComponentHelper {
      * @type {function(...?(boolean|string|React.Component|Object<string, boolean>)): string}
      */
     this._cssClassNameProcessor = cssClassNameProcessor;
+
+    /**
+     * Cached amp detection
+     *
+     * @type {Boolean|null}
+     */
+    this._isAmp = null;
   }
 
   /**
@@ -116,53 +124,46 @@ export default class UIComponentHelper {
    * @return {boolean}
    */
   isAmp() {
-    let ampParam = null;
-
-    try {
-      ampParam = this._router.getCurrentRouteInfo().params.amp;
-    } catch (error) {
-      ampParam = false;
-    }
-
-    return ampParam === true || ampParam === '1';
-  }
-
-  /**
-   * Filters the provided properties and returns only the properties which's
-   * names start with the {@code data-} prefix.
-   *
-   * @param {Object<string, *>} props
-   * @return {Object<string, (number|string)>}
-   */
-  getDataProps(props) {
-    let dataProps = {};
-
-    for (let propertyName of Object.keys(props)) {
-      if (/^data-/.test(propertyName)) {
-        dataProps[propertyName] = props[propertyName];
+    if (this._isAmp === null) {
+      try {
+        const ampParam = this._router.getCurrentRouteInfo().params.amp;
+        this._isAmp = ampParam === true || ampParam === '1';
+      } catch (error) {
+        this._isAmp = false;
       }
     }
 
-    return dataProps;
+    return this._isAmp;
   }
 
   /**
-   * Filters the provided properties and returns only the properties which's
-   * names start with the {@code aria-} prefix or role or tabindex property.
+   * Renders react element, using dangerouslySetInnerHTML
+   * when no children present
    *
-   * @param {Object<string, *>} props
+   */
+  getAtomComponent({ Type, atomProps, children, text }) {
+    if (!children) {
+      atomProps.dangerouslySetInnerHTML = { __html: text };
+    }
+    return React.createElement(Type, atomProps, children ? children : null);
+  }
+
+  /**
+   * Refine props by removing and adding custom items
+   *
+   * @param {Object<string, *>} originalProps
+   * @param {Object<string, *>} removeProps
+   * @param {Object<string, *>} addProps
    * @return {Object<string, (number|string)>}
    */
-  getAriaProps(props) {
-    let ariaProps = {};
+  getRefinedProps({ originalProps, removeProps, addProps }) {
+    let refinedProps = Object.assign({}, originalProps);
 
-    for (let propertyName of Object.keys(props)) {
-      if (/^(aria-|role|tabIndex)/.test(propertyName)) {
-        ariaProps[propertyName] = props[propertyName];
-      }
+    for (let propertyName of Object.keys(removeProps)) {
+      delete refinedProps[propertyName];
     }
 
-    return ariaProps;
+    return Object.assign(refinedProps, addProps);
   }
 
   /**
@@ -173,7 +174,14 @@ export default class UIComponentHelper {
    */
   serializeObjectToNoScript(object = {}) {
     return Object.keys(object).reduce((string, key) => {
-      return string + ` ${key}="${object[key]}"`;
+      return string + (
+        object[key] !== undefined &&
+        object[key] !== null &&
+        key !== 'className' ? 
+          ` ${key.toLowerCase()}="${object[key]}"` 
+        : 
+          ''
+      );
     }, '');
   }
 

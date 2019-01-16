@@ -16,39 +16,40 @@ export default class AmpVideo extends React.PureComponent {
     };
   }
 
-  render() {
-    let helper = this.context.$Utils.$UIComponentHelper;
-    let {
-      src,
-      poster,
-      autoplay,
-      controls,
-      loop,
-      muted,
-      width,
-      height,
-      layout,
-      className,
-      children
-    } = this.props;
+  static get propTypes() {
+    return {
+      scrolling: PropTypes.string,
+      wrapperClassName: PropTypes.string,
+      className: PropTypes.string,
+      noloading: PropTypes.bool,
+      children: PropTypes.node
+    };
+  }
 
-    return (
-      <amp-video
-        src={src}
-        poster={poster}
-        autoplay={autoplay}
-        controls={controls}
-        loop={loop}
-        muted={muted}
-        width={width}
-        height={height}
-        layout={layout}
-        class={helper.cssClasses(className)}
-        {...helper.getDataProps(this.props)}
-        {...helper.getAriaProps(this.props)}>
-        <div placeholder="" />
-        {children}
-      </amp-video>
-    );
+  static get defaultProps() {
+    return {
+      scrolling: 'no',
+      wrapperClassName: '',
+      className: '',
+      noloading: false,
+      children: null
+    };
+  }
+
+  render() {
+    const helper = this.context.$Utils.$UIComponentHelper,
+      atomProps = helper.getRefinedProps({
+        originalProps: this.props,
+        removeProps: AmpVideo.defaultProps,
+        addProps: {
+          class: helper.cssClasses(
+            this.props.wrapperClassName,
+            this.props.className
+          )
+        }
+      }),
+      children = this.props.children || <div placeholder="" />;
+
+    return <amp-video {...atomProps}>{children}</amp-video>;
   }
 }

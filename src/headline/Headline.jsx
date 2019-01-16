@@ -16,65 +16,43 @@ export default class Headline extends React.PureComponent {
 
   static get propTypes() {
     return {
-      id: PropTypes.string,
       className: PropTypes.string,
       text: PropTypes.string,
       type: PropTypes.string,
-      mode: PropTypes.string,
-      style: PropTypes.object,
-      'data-e2e': PropTypes.string
+      mode: PropTypes.string, // remove
+      children: PropTypes.node
     };
   }
 
   static get defaultProps() {
     return {
-      id: null,
       className: '',
       text: null,
       mode: null,
       type: 'h1',
-      style: null,
-      'data-e2e': null
+      children: null
     };
   }
 
   render() {
-    let headline = null;
-    let { type: Type, id, mode, text, className, children, style } = this.props;
-    let helper = this.context.$Utils.$UIComponentHelper;
-    let computedClassName = helper.cssClasses(
-      {
-        ['atm-headline']: true,
-        ['atm-' + mode]: mode,
-        ['atm-' + Type]: Type
-      },
-      className
-    );
+    const helper = this.context.$Utils.$UIComponentHelper,
+      { type: Type, mode, className, children, text } = this.props,
+      computedClassName = helper.cssClasses(
+        {
+          ['atm-headline']: true,
+          ['atm-' + mode]: mode, // remove
+          ['atm-' + Type]: Type
+        },
+        className
+      ),
+      atomProps = helper.getRefinedProps({
+        originalProps: this.props,
+        removeProps: Headline.defaultProps,
+        addProps: {
+          className: computedClassName
+        }
+      });
 
-    if (children) {
-      headline = (
-        <Type
-          id={id}
-          style={style}
-          className={computedClassName}
-          {...helper.getDataProps(this.props)}
-          {...helper.getAriaProps(this.props)}>
-          {children}
-        </Type>
-      );
-    } else {
-      headline = (
-        <Type
-          id={id}
-          style={style}
-          className={computedClassName}
-          {...helper.getDataProps(this.props)}
-          {...helper.getAriaProps(this.props)}
-          dangerouslySetInnerHTML={{ __html: text }}
-        />
-      );
-    }
-
-    return headline;
+    return helper.getAtomComponent({ Type, atomProps, children, text });
   }
 }

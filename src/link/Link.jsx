@@ -18,59 +18,40 @@ export default class Link extends React.PureComponent {
   static get propTypes() {
     return {
       text: PropTypes.string,
-      href: PropTypes.string,
-      title: PropTypes.string,
-      target: PropTypes.string,
-      onClick: PropTypes.func,
       mode: PropTypes.string,
-      style: PropTypes.object,
       className: PropTypes.string,
-      'data-e2e': PropTypes.string
+      children: PropTypes.node
     };
   }
 
   static get defaultProps() {
     return {
       text: null,
-      mode: '',
-      style: null,
+      mode: null,
       className: '',
-      'data-e2e': null
+      children: null
     };
   }
 
   render() {
-    let helper = this.context.$Utils.$UIComponentHelper;
-    let {
-      href,
-      title,
-      target,
-      mode,
-      className,
-      onClick,
-      children,
-      text,
-      style
-    } = this.props;
+    const helper = this.context.$Utils.$UIComponentHelper,
+      Type = 'a',
+      { mode, className, children, text } = this.props,
+      computedClassName = helper.cssClasses(
+        {
+          'atm-link': true,
+          ['atm-link-' + mode]: mode
+        },
+        className
+      ),
+      atomProps = helper.getRefinedProps({
+        originalProps: this.props,
+        removeProps: Link.defaultProps,
+        addProps: {
+          className: computedClassName
+        }
+      });
 
-    return (
-      <a
-        href={href}
-        title={title}
-        target={target}
-        style={style}
-        className={helper.cssClasses(
-          {
-            'atm-link': true,
-            ['atm-link-' + mode]: mode
-          },
-          className
-        )}
-        onClick={onClick}
-        {...helper.getDataProps(this.props)}
-        {...helper.getAriaProps(this.props)}>
-        {children || text}
-      </a>
-    );
+    return helper.getAtomComponent({ Type, atomProps, children, text });
   }
 }

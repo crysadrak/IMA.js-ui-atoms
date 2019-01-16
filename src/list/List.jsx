@@ -20,41 +20,38 @@ export default class List extends React.PureComponent {
       className: PropTypes.string,
       mode: PropTypes.string,
       type: PropTypes.string,
-      style: PropTypes.object,
-      'data-e2e': PropTypes.string
+      children: PropTypes.node
     };
   }
 
   static get defaultProps() {
     return {
       className: '',
-      mode: '',
+      mode: null,
       type: 'ul',
-      style: null,
-      'data-e2e': null
+      children: null
     };
   }
 
   render() {
-    let helper = this.context.$Utils.$UIComponentHelper;
-    let { type: Type, mode, id, className, children, style } = this.props;
+    const helper = this.context.$Utils.$UIComponentHelper,
+      { type: Type, mode, className, children, text } = this.props,
+      computedClassName = helper.cssClasses(
+        {
+          'atm-list': true,
+          ['atm-list-' + mode]: mode,
+          ['atm-list-' + Type]: Type
+        },
+        className
+      ),
+      atomProps = helper.getRefinedProps({
+        originalProps: this.props,
+        removeProps: List.defaultProps,
+        addProps: {
+          className: computedClassName
+        }
+      });
 
-    return (
-      <Type
-        style={style}
-        className={helper.cssClasses(
-          {
-            'atm-list': true,
-            ['atm-list-' + mode]: mode,
-            ['atm-list-' + Type]: Type
-          },
-          className
-        )}
-        id={id}
-        {...helper.getDataProps(this.props)}
-        {...helper.getAriaProps(this.props)}>
-        {children}
-      </Type>
-    );
+    return helper.getAtomComponent({ Type, atomProps, children, text });
   }
 }

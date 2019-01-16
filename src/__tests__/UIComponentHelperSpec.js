@@ -56,30 +56,6 @@ describe('UIComponentHelper', () => {
     });
   });
 
-  describe('getDataProps method', () => {
-    let dataProps = {
-      'data-e2e': 'something',
-      'data-key': 'key'
-    };
-    let props = Object.assign({ key: 'key' }, dataProps);
-
-    it('should return only attributes with name data-*', () => {
-      expect(uiComponentHelper.getDataProps(props)).toEqual(dataProps);
-    });
-  });
-
-  describe('getAriaProps method', () => {
-    let ariaProps = {
-      'aria-label': 'something',
-      'aria-hidden': true
-    };
-    let props = Object.assign({ key: 'key' }, ariaProps);
-
-    it('should return only attributes with name aria-*', () => {
-      expect(uiComponentHelper.getAriaProps(props)).toEqual(ariaProps);
-    });
-  });
-
   describe('serializeObjectToNoScript method', () => {
     let ariaProps = {
       'aria-label': 'something',

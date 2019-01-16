@@ -16,52 +16,46 @@ export default class AmpIframe extends React.PureComponent {
     };
   }
 
-  render() {
-    let helper = this.context.$Utils.$UIComponentHelper;
-    let {
-      src,
-      srcDoc,
-      width,
-      height,
-      scrolling,
-      layout,
-      sandbox,
-      frameBorder,
-      className,
-      allowFullScreen,
-      resizable,
-      marginWidth,
-      marginHeight
-    } = this.props;
-    let props = {
-      src,
-      srcDoc,
-      width,
-      height,
-      scrolling,
-      layout,
-      sandbox,
-      frameBorder,
-      marginWidth,
-      marginHeight,
-      class: helper.cssClasses(className)
+  static get propTypes() {
+    return {
+      scrolling: PropTypes.string,
+      wrapperClassName: PropTypes.string,
+      className: PropTypes.string,
+      noloading: PropTypes.bool,
+      allowFullScreen: PropTypes.bool,
+      resizable: PropTypes.bool,
+      children: PropTypes.node
     };
+  }
 
-    if (allowFullScreen) {
-      props.allowFullScreen = '';
-    }
+  static get defaultProps() {
+    return {
+      scrolling: 'no',
+      wrapperClassName: '',
+      className: '',
+      noloading: false,
+      allowFullScreen: false,
+      resizable: false,
+      children: null
+    };
+  }
 
-    if (resizable) {
-      props.resizable = '';
-    }
+  render() {
+    const helper = this.context.$Utils.$UIComponentHelper,
+      atomProps = helper.getRefinedProps({
+        originalProps: this.props,
+        removeProps: AmpIframe.defaultProps,
+        addProps: {
+          class: helper.cssClasses(
+            this.props.wrapperClassName,
+            this.props.className
+          ),
+          allowFullScreen: this.props.allowFullScreen ? '' : null,
+          resizable: this.props.resizable ? '' : null
+        }
+      }),
+      children = this.props.children || <div placeholder="" />;
 
-    return (
-      <amp-iframe
-        {...props}
-        {...helper.getDataProps(this.props)}
-        {...helper.getAriaProps(this.props)}>
-        {this.props.children || <div placeholder="" />}
-      </amp-iframe>
-    );
+    return <amp-iframe {...atomProps}>{children}</amp-iframe>;
   }
 }

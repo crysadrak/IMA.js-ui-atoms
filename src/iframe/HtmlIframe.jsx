@@ -18,6 +18,36 @@ export default class HtmlIframe extends React.PureComponent {
     };
   }
 
+  static get propTypes() {
+    return {
+      width: PropTypes.number,
+      height: PropTypes.number,
+      marginWidth: PropTypes.number,
+      marginHeight: PropTypes.number,
+      layout: PropTypes.string,
+      scrolling: PropTypes.string,
+      wrapperClassName: PropTypes.string,
+      className: PropTypes.string,
+      noloading: PropTypes.bool,
+      children: PropTypes.node
+    };
+  }
+
+  static get defaultProps() {
+    return {
+      width: null,
+      height: null,
+      marginWidth: null,
+      marginHeight: null,
+      layout: null,
+      scrolling: 'no',
+      wrapperClassName: '',
+      className: '',
+      noloading: false,
+      children: null
+    };
+  }
+
   static getDerivedStateFromProps(nextProps, prevState) {
     return {
       visibleInViewport:
@@ -52,6 +82,16 @@ export default class HtmlIframe extends React.PureComponent {
     );
   }
 
+  get renderNoScript() {
+    return !(
+      this.utils.$Settings &&
+      this.utils.$Settings.plugin &&
+      this.utils.$Settings.plugin.imaUiAtoms &&
+      this.utils.$Settings.plugin.imaUiAtoms.disableNoScript &&
+      this.utils.$Settings.plugin.imaUiAtoms.disableNoScript.iframes === true
+    );
+  }
+
   componentDidMount() {
     if (this.state.visibleInViewport === false) {
       this._registerToCheckingVisibility();
@@ -63,94 +103,67 @@ export default class HtmlIframe extends React.PureComponent {
   }
 
   render() {
-    let helper = this.utils.$UIComponentHelper;
+    const helper = this.utils.$UIComponentHelper,
+      isResponsive = this.props.layout === 'responsive',
+      wrapperStyle = isResponsive
+        ? {}
+        : {
+            width: this.props.width || 'auto',
+            height: this.props.height || 'auto'
+          },
+      computedWrapperClassName = helper.cssClasses(
+        {
+          'atm-iframe': true,
+          'atm-overflow': true,
+          'atm-placeholder': !this.state.visibleInViewport,
+          'atm-responsive': isResponsive,
+          'atm-fill': this.props.layout === 'fill'
+        },
+        this.props.wrapperClassName
+      ),
+      computedTargetClassName = helper.cssClasses(
+        {
+          'atm-fill': true
+        },
+        this.props.className
+      ),
+      sizer = isResponsive ? (
+        <Sizer
+          width={this.props.width}
+          height={this.props.height}
+          placeholder={true}
+        />
+      ) : null,
+      atomProps = helper.getRefinedProps({
+        originalProps: this.props,
+        removeProps: HtmlIframe.defaultProps,
+        addProps: {
+          className: computedTargetClassName,
+          scrolling: this.props.scrolling ? this.props.scrolling : 'no',
+          marginWidth: Number.isInteger(this.props.marginWidth) ? this.props.marginWidth : null,
+          marginHeight: Number.isInteger(this.props.marginHeight) ? this.props.marginHeight : null
+        }
+      }),
+      atom = this.state.visibleInViewport ? <iframe {...atomProps} /> : null,
+      noScript = this.renderNoScript ? (
+        <noscript
+          dangerouslySetInnerHTML={{
+            __html: `<iframe
+            class="${helper.cssClasses('atm-fill atm-loaded')}"
+            ${helper.serializeObjectToNoScript(atomProps)}></iframe>`
+          }}
+        />
+      ) : null;
 
     return (
       <div
         ref={this._rootElement}
-        className={helper.cssClasses(
-          {
-            'atm-iframe': true,
-            'atm-overflow': true,
-            'atm-placeholder': !this.state.visibleInViewport,
-            'atm-responsive': this.props.layout === 'responsive',
-            'atm-fill': this.props.layout === 'fill'
-          },
-          this.props.className
-        )}
-        style={
-          this.props.layout === 'responsive'
-            ? {}
-            : {
-                width: this.props.width || 'auto',
-                height: this.props.height || 'auto'
-              }
-        }
-        {...helper.getDataProps(this.props)}>
-        {this.props.layout === 'responsive' ? (
-          <Sizer
-            width={this.props.width}
-            height={this.props.height}
-            placeholder={true}
-          />
-        ) : null}
-        {this.state.visibleInViewport ? (
-          <iframe
-            src={this.props.src}
-            name={this.props.src}
-            srcDoc={this.props.srcDoc}
-            width={this.props.width}
-            height={this.props.height}
-            scrolling={this.props.scrolling}
-            sandbox={this.props.sandbox}
-            frameBorder={this.props.frameBorder}
-            allow={this.props.allow}
-            allowFullScreen={this.props.allowFullScreen}
-            onLoad={this.props.onLoad}
-            marginWidth={this.props.marginWidth}
-            marginHeight={this.props.marginHeight}
-            className={helper.cssClasses({
-              'atm-fill': true
-            })}
-            {...helper.getAriaProps(this.props)}
-          />
-        ) : null}
-        <noscript
-          className={helper.cssClasses('atm-fill')}
-          style={{
-            display: 'block',
-            width: this.props.width || 'auto',
-            height: this.props.height || 'auto'
-          }}
-          dangerouslySetInnerHTML={{
-            __html: `<iframe
-								src="${this.props.src}"
-								${this.props.srcDoc !== null ? `srcdoc="${this.props.srcDoc}"` : ''}
-								width="${this.props.width || 'auto'}"
-								height="${this.props.height || 'auto'}"
-								${this.props.sandbox ? `sandbox="${this.props.sandbox}"` : ''}
-								scrolling="${this.props.scrolling || 'no'}"
-								frameborder="${this.props.frameBorder || '0'}"
-                                ${
-                                  this.props.allow
-                                    ? `allow="${this.props.allow}"`
-                                    : ''
-                                }
-								allowfullscreen="${this.props.allowFullScreen || '0'}"
-								${
-                  Number.isInteger(this.props.marginWidth)
-                    ? `marginwidth="${this.props.marginWidth}"`
-                    : ''
-                }
-								${
-                  Number.isInteger(this.props.marginHeight)
-                    ? `marginheight="${this.props.marginHeight}"`
-                    : ''
-                }
-								class="${helper.cssClasses('atm-fill atm-loaded')}"
-								${helper.serializeObjectToNoScript(helper.getAriaProps(this.props))}></iframe>`
-          }}
-        />
+        className={computedWrapperClassName}
+        style={wrapperStyle}
+      >
+        {sizer}
+        {atom}
+        {noScript}
       </div>
     );
   }
@@ -176,8 +189,8 @@ export default class HtmlIframe extends React.PureComponent {
   }
 
   _registerToCheckingVisibility() {
-    let { $UIComponentHelper } = this.utils;
-    let extendedPadding = Math.max(
+    const { $UIComponentHelper } = this.utils;
+    const extendedPadding = Math.max(
       $UIComponentHelper.componentPositions.getWindowViewportRect().height / 2,
       MIN_EXTENDED_PADDING
     );

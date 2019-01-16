@@ -18,58 +18,43 @@ export default class Paragraph extends React.PureComponent {
   static get propTypes() {
     return {
       className: PropTypes.string,
+      align: PropTypes.string,
       text: PropTypes.string,
       mode: PropTypes.string,
-      style: PropTypes.object,
-      'data-e2e': PropTypes.string
+      children: PropTypes.node
     };
   }
 
   static get defaultProps() {
     return {
       className: '',
+      align: null,
       text: null,
       mode: '',
-      style: null,
-      'data-e2e': null
+      children: null
     };
   }
 
   render() {
-    let helper = this.context.$Utils.$UIComponentHelper;
-    let { mode, align, className, children, text, style } = this.props;
-    let paragraph = null;
-    let componentClassName = helper.cssClasses(
-      {
-        'atm-paragraph': true,
-        ['atm-paragraph-' + mode]: mode,
-        ['atm-paragraph-align-' + align]: align
-      },
-      className
-    );
+    const helper = this.context.$Utils.$UIComponentHelper,
+      Type = 'p',
+      { mode, align, className, children, text } = this.props,
+      computedClassName = helper.cssClasses(
+        {
+          'atm-paragraph': true,
+          ['atm-paragraph-' + mode]: mode,
+          ['atm-paragraph-align-' + align]: align
+        },
+        className
+      ),
+      atomProps = helper.getRefinedProps({
+        originalProps: this.props,
+        removeProps: Paragraph.defaultProps,
+        addProps: {
+          className: computedClassName
+        }
+      });
 
-    if (children) {
-      paragraph = (
-        <p
-          style={style}
-          className={componentClassName}
-          {...helper.getDataProps(this.props)}
-          {...helper.getAriaProps(this.props)}>
-          {children}
-        </p>
-      );
-    } else {
-      paragraph = (
-        <p
-          style={style}
-          className={componentClassName}
-          {...helper.getDataProps(this.props)}
-          {...helper.getAriaProps(this.props)}
-          dangerouslySetInnerHTML={{ __html: text }}
-        />
-      );
-    }
-
-    return paragraph;
+    return helper.getAtomComponent({ Type, atomProps, children, text });
   }
 }

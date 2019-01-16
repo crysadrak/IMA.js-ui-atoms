@@ -17,40 +17,6 @@ export default class Image extends React.PureComponent {
     };
   }
 
-  static get propTypes() {
-    return {
-      src: PropTypes.string,
-      srcSet: PropTypes.string,
-      sizes: PropTypes.string,
-      width: PropTypes.number,
-      height: PropTypes.number,
-      alt: PropTypes.string,
-      onLoad: PropTypes.func,
-      onError: PropTypes.func,
-      className: PropTypes.string,
-      'data-e2e': PropTypes.string,
-      layout: PropTypes.string,
-      noloading: PropTypes.bool,
-      extendedPadding: PropTypes.number
-    };
-  }
-
-  static get defaultProps() {
-    return {
-      src: null,
-      srcSet: null,
-      sizes: null,
-      width: null,
-      height: null,
-      alt: null,
-      className: '',
-      'data-e2e': null,
-      layout: null,
-      noloading: false,
-      extendedPadding: 0
-    };
-  }
-
   render() {
     if (this.context.$Utils.$UIComponentHelper.isAmp()) {
       return <AmpImage {...this.props} />;

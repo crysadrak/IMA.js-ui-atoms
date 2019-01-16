@@ -18,6 +18,32 @@ export default class HtmlVideo extends React.PureComponent {
     };
   }
 
+  static get propTypes() {
+    return {
+      width: PropTypes.number,
+      height: PropTypes.number,
+      layout: PropTypes.string,
+      autoplay: PropTypes.bool,
+      wrapperClassName: PropTypes.string,
+      className: PropTypes.string,
+      noloading: PropTypes.bool,
+      children: PropTypes.node
+    };
+  }
+
+  static get defaultProps() {
+    return {
+      width: null,
+      height: null,
+      layout: null,
+      autoplay: null,
+      wrapperClassName: '',
+      className: '',
+      noloading: false,
+      children: null
+    };
+  }
+
   constructor(props, context) {
     super(props, context);
 
@@ -50,70 +76,84 @@ export default class HtmlVideo extends React.PureComponent {
     );
   }
 
+  get renderNoScript() {
+    return !(
+      this.utils.$Settings &&
+      this.utils.$Settings.plugin &&
+      this.utils.$Settings.plugin.imaUiAtoms &&
+      this.utils.$Settings.plugin.imaUiAtoms.disableNoScript &&
+      this.utils.$Settings.plugin.imaUiAtoms.disableNoScript.videos === true
+    );
+  }
+
   render() {
-    let helper = this.utils.$UIComponentHelper;
+    const helper = this.utils.$UIComponentHelper,
+      isResponsive = this.props.layout === 'responsive',
+      wrapperStyle = isResponsive
+        ? {}
+        : {
+            width: this.props.width || 'auto',
+            height: this.props.height || 'auto'
+          },
+      computedWrapperClassName = helper.cssClasses(
+        {
+          'atm-video': true,
+          'atm-overflow': true,
+          'atm-placeholder': !this.state.noloading,
+          'atm-responsive': isResponsive,
+          'atm-fill': this.props.layout === 'fill'
+        },
+        this.props.wrapperClassName
+      ),
+      computedTargetClassName = helper.cssClasses(
+        {
+          'atm-fill': true,
+          'atm-loaded': this.state.noloading && this._visibleInViewport
+        },
+        this.props.className
+      ),
+      sizer = isResponsive ? (
+        <Sizer
+          width={this.props.width}
+          height={this.props.height}
+          placeholder={!this.state.noloading}
+        />
+      ) : null,
+      atomProps = helper.getRefinedProps({
+        originalProps: this.props,
+        removeProps: HtmlVideo.defaultProps,
+        addProps: {
+          className: computedTargetClassName,
+          autoPlay: this.props.autoplay
+        }
+      }),
+      atom = this.state.noloading ? (
+        <video {...atomProps}>
+          <div placeholder="" />
+          {this.props.children}
+        </video>
+      ) : null,
+      noScript = this.renderNoScript ? (
+        <noscript
+          dangerouslySetInnerHTML={{
+            __html: `<video
+            poster="${this.props.alt || ''}"
+            controls
+            class="${helper.cssClasses('atm-fill atm-loaded')}"
+            ${helper.serializeObjectToNoScript(atomProps)}></video>`
+          }}
+        />
+      ) : null;
 
     return (
       <div
         ref={this._rootElement}
-        className={helper.cssClasses(
-          {
-            'atm-video': true,
-            'atm-overflow': true,
-            'atm-placeholder': !this.state.noloading,
-            'atm-responsive': this.props.layout === 'responsive',
-            'atm-fill': this.props.layout === 'fill'
-          },
-          this.props.className
-        )}
-        style={
-          this.props.layout === 'responsive'
-            ? {}
-            : {
-                width: this.props.width || 'auto',
-                height: this.props.height || 'auto'
-              }
-        }
-        {...helper.getDataProps(this.props)}>
-        {this.props.layout === 'responsive' ? (
-          <Sizer
-            width={this.props.width}
-            height={this.props.height}
-            placeholder={!this.state.noloading}
-          />
-        ) : null}
-        {this.state.noloading ? (
-          <video
-            src={this.props.src}
-            poster={this.props.poster}
-            autoPlay={this.props.autoplay}
-            controls={this.props.controls}
-            loop={this.props.loop}
-            muted={this.props.muted}
-            width={this.props.width}
-            height={this.props.height}
-            className={helper.cssClasses({
-              'atm-fill': true,
-              'atm-loaded': this.state.noloading && this._visibleInViewport
-            })}
-            {...helper.getAriaProps(this.props)}>
-            <div placeholder="" />
-            {this.props.children}
-          </video>
-        ) : null}
-        <noscript
-          dangerouslySetInnerHTML={{
-            __html: `<video
-								src="${this.props.src || ''}"
-								poster="${this.props.alt || ''}"
-								controls
-								${this.props.autoplay ? 'autoPlay' : ''}
-								${this.props.loop ? 'loop' : ''}
-								${this.props.muted ? 'muted' : ''}
-								class="${helper.cssClasses('atm-fill atm-loaded')}"
-								${helper.serializeObjectToNoScript(helper.getAriaProps(this.props))}></video>`
-          }}
-        />
+        className={computedWrapperClassName}
+        style={wrapperStyle}
+      >
+        {sizer}
+        {atom}
+        {noScript}
       </div>
     );
   }
@@ -150,8 +190,8 @@ export default class HtmlVideo extends React.PureComponent {
   }
 
   _registerToCheckingVisibility() {
-    let { $UIComponentHelper } = this.utils;
-    let extendedPadding = Math.max(
+    const { $UIComponentHelper } = this.utils;
+    const extendedPadding = Math.max(
       Math.round(
         $UIComponentHelper.componentPositions.getWindowViewportRect().height / 2
       ),
@@ -176,8 +216,8 @@ export default class HtmlVideo extends React.PureComponent {
       return;
     }
 
-    let componentInstance = this;
-    let image = new Image();
+    const componentInstance = this;
+    const image = new Image();
     image.onload = onLoadingCompleted;
     image.onerror = onLoadingCompleted;
     image.src = this.props.poster;

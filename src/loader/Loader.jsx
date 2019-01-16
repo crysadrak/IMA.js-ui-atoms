@@ -20,8 +20,7 @@ export default class Loader extends React.PureComponent {
       mode: PropTypes.string, //possible values: [small, big]
       layout: PropTypes.string, //possible values: [center]
       color: PropTypes.oneOf(['black', 'white']),
-      className: PropTypes.string,
-      'data-e2e': PropTypes.string
+      className: PropTypes.string
     };
   }
 
@@ -30,31 +29,39 @@ export default class Loader extends React.PureComponent {
       mode: '',
       layout: '',
       color: 'black',
-      className: '',
-      'data-e2e': null
+      className: ''
     };
   }
 
   render() {
-    const helper = this.context.$Utils.$UIComponentHelper;
-    const { className, mode, layout, color = 'black' } = this.props;
+    const helper = this.context.$Utils.$UIComponentHelper,
+      { className, mode, layout, color = 'black' } = this.props,
+      computedClassName = helper.cssClasses(
+        {
+          'atm-loader': true,
+          ['atm-loader-' + mode]: mode,
+          ['atm-loader-' + layout]: layout
+        },
+        className
+      ),
+      computedInnerClassName = helper.cssClasses({
+        'atm-loader-animation': true,
+        ['atm-loader-animation-' + color]: color
+      }),
+      targetProps = helper.getRefinedProps({
+        originalProps: this.props,
+        removeProps: Loader.defaultProps,
+        addProps: {
+          className: computedClassName
+        }
+      });
 
     return (
       <div
-        className={helper.cssClasses(
-          {
-            'atm-loader': true,
-            ['atm-loader-' + mode]: mode,
-            ['atm-loader-' + layout]: layout
-          },
-          className
-        )}
-        {...helper.getDataProps(this.props)}>
+        {...targetProps}
+      >
         <div
-          className={helper.cssClasses({
-            'atm-loader-animation': true,
-            ['atm-loader-animation-' + color]: color
-          })}
+          className={computedInnerClassName}
         />
       </div>
     );
